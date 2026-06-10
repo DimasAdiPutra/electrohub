@@ -44,8 +44,6 @@ src/
 └── utils/               # Fungsi pembantu (Format Rupiah, dll)
 ```
 
-````
-
 ---
 
 ## 🚀 Cara Menjalankan Proyek di Lokal
@@ -110,4 +108,3 @@ create table products (
 ---
 
 💡 _Proyek ini dibangun sebagai solusi digitalisasi manajemen pergudangan toko elektronik retail dan dirancang dengan praktik penulisan kode industri (clean code & modular component)._
-````
