@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './components/layout/Sidebar'
-import DashboardView from './components/dashboard/DashboardView'
-import InventoryView from './components/inventory/InventoryView'
+import { DashboardView } from './components/dashboard/DashboardView'
+import { InventoryView } from './components/inventory/InventoryView'
 import { SalesView } from './components/sales/SalesView'
 import { Menu, X } from 'lucide-react' // Mengambil ikon menu
 
