@@ -1,8 +1,3 @@
-Untuk membuat rekruter terpukau saat melihat repositori GitHub kamu, file `README.md` tidak boleh hanya berisi teks biasa. File tersebut harus terlihat profesional, menjelaskan **masalah yang diselesaikan**, **arsitektur teknologi**, dan **cara menjalankan proyek** dengan jelas.
-
-Berikut adalah draf file `README.md` yang super keren dan siap kamu pakai. Silakan buat file baru bernama **`README.md`** di folder paling luar proyekmu, lalu _copy-paste_ kode Markdown di bawah ini:
-
-````markdown
 # ElectroHub - Gudang & Inventaris Smart Management System ⚡
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -48,6 +43,7 @@ src/
 ├── types/               # Kontrak data / Interface TypeScript
 └── utils/               # Fungsi pembantu (Format Rupiah, dll)
 ```
+
 ````
 
 ---
@@ -114,3 +110,4 @@ create table products (
 ---
 
 💡 _Proyek ini dibangun sebagai solusi digitalisasi manajemen pergudangan toko elektronik retail dan dirancang dengan praktik penulisan kode industri (clean code & modular component)._
+````
