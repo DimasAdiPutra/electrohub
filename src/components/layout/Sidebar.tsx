@@ -2,6 +2,7 @@ import React from 'react'
 import {
 	LayoutDashboard,
 	Package,
+	ShoppingCart,
 	// ShoppingCart,
 	// BarChart3,
 	Store,
@@ -9,7 +10,7 @@ import {
 
 // Definisi tipe halaman yang valid sesuai dengan state di App.tsx
 // type PageType = 'dashboard' | 'inventory' | 'orders' | 'reports'
-type PageType = 'dashboard' | 'inventory'
+type PageType = 'dashboard' | 'inventory' | 'sales'
 
 interface SidebarProps {
 	activePage: PageType
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 	const menuItems = [
 		{ id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
 		{ id: 'inventory', name: 'Inventory', icon: Package },
+		{ id: 'sales', name: 'Kasir (POS)', icon: ShoppingCart },
 		// { id: 'orders', name: 'Orders', icon: ShoppingCart },
 		// { id: 'reports', name: 'Reports', icon: BarChart3 },
 	]
