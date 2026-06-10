@@ -2,12 +2,13 @@ import { useState } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import DashboardView from './components/dashboard/DashboardView'
 import InventoryView from './components/inventory/InventoryView'
+import { SalesView } from './components/sales/SalesView'
 import { Menu, X } from 'lucide-react' // Mengambil ikon menu
 
 function App() {
-	const [activePage, setActivePage] = useState<'dashboard' | 'inventory'>(
-		'dashboard',
-	)
+	const [activePage, setActivePage] = useState<
+		'dashboard' | 'inventory' | 'sales'
+	>('dashboard')
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false) // State untuk HP
 
 	return (
@@ -52,6 +53,7 @@ function App() {
 						/>
 					)}
 					{activePage === 'inventory' && <InventoryView />}
+					{activePage === 'sales' && <SalesView />}
 				</main>
 			</div>
 		</div>
