@@ -126,4 +126,72 @@ export const productService = {
 			)
 		}
 	},
+
+	// --- FUNGSI UNTUK MERUBAH DATA MENJADI EXCEL / CSV ---
+	async downloadInventoryCSV() {
+		try {
+			// 1. Ambil data produk terbaru dari database
+			const products = await this.getAll()
+
+			if (products.length === 0) {
+				alert('Tidak ada data produk yang bisa diexport.')
+				return
+			}
+
+			// 2. Buat judul kolom (Header) di baris pertama Excel
+			// Menggunakan pembatas koma (,) atau titik koma (;) sesuai standar Excel internasional
+			const headers = [
+				'No',
+				'Nama Produk',
+				'Kode SKU',
+				'Kategori',
+				'Harga (Rp)',
+				'Stok Tersedia',
+			]
+
+			// 3. Konversi susunan data produk menjadi baris-baris teks CSV
+			const csvRows = [
+				headers.join(','), // Baris pertama adalah header
+				...products.map((p, i) =>
+					[
+						`"${i + 1}"`,
+						`"${p.name.replace(/"/g, '""')}"`, // Bungkus dengan tanda kutip untuk mengamankan karakter spasi atau koma
+						`"${p.sku}"`,
+						`"${p.category}"`,
+						p.price,
+						p.stock,
+					].join(','),
+				),
+			]
+
+			const csvContent = csvRows.join('\n')
+
+			// 4. Proses konversi teks menjadi file berkas biner (Blob) instan di browser
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+			const url = URL.createObjectURL(blob)
+
+			// 5. Trigger download otomatis di browser user
+			const link = document.createElement('a')
+			link.href = url
+
+			// Beri nama file laporan yang rapi disertai tanggal cetak otomatis
+			const tanggal = new Date().toLocaleDateString('id-ID').replace(/\//g, '-')
+			link.setAttribute(
+				'download',
+				`Laporan_Inventaris_ElectroHub_${tanggal}.csv`,
+			)
+
+			document.body.appendChild(link)
+			link.click()
+			document.body.removeChild(link)
+
+			// 6. Catat ke Log Aktivitas bahwa admin telah mencetak laporan keuangan
+			await this.addLog(
+				'TRANSACTION',
+				`Admin melakukan export seluruh data laporan inventaris toko ke file Excel/CSV`,
+			)
+		} catch (error: any) {
+			alert('Gagal mengeksport data: ' + error.message)
+		}
+	},
 }

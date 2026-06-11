@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
+import {
+	Search,
+	Plus,
+	Edit2,
+	Trash2,
+	ArrowUp,
+	ArrowDown,
+	Download,
+} from 'lucide-react'
 import type { Product } from '../../types/product'
 import { formatRupiah } from '../../utils/formatCurrency'
 import { productService } from '../../services/productService'
@@ -165,12 +173,24 @@ export const InventoryView: React.FC = () => {
 						Kelola stok barang dan kode SKU toko secara realtime.
 					</p>
 				</div>
-				<button
-					onClick={openAddModal}
-					className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-xs transition-colors">
-					<Plus size={18} />
-					<span>Tambah Produk</span>
-				</button>
+				{/* AREA DUA TOMBOL AKSI UTAMA */}
+				<div className="flex items-center space-x-2">
+					{/* TOMBOL CETAK EXCEL BARU */}
+					<button
+						onClick={() => productService.downloadInventoryCSV()}
+						className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg border border-slate-200 transition-colors">
+						<Download size={18} />
+						<span>Cetak Excel</span>
+					</button>
+
+					{/* TOMBOL TAMBAH PRODUK YANG SUDAH ADA */}
+					<button
+						onClick={openAddModal}
+						className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-2xs transition-colors">
+						<Plus size={18} />
+						<span>Tambah Produk</span>
+					</button>
+				</div>
 			</div>
 
 			<div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
