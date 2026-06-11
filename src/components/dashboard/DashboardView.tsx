@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import type { Product } from '../../types/product'
 import { formatRupiah } from '../../utils/formatCurrency'
-import { productService } from '../../services/productService'
+import { productService } from '../../services/productService' // <-- Import ActivityLog
+import type { ActivityLog } from '../../types/activityLog'
 
 interface DashboardViewProps {
 	onNavigateToInventory?: () => void
@@ -19,12 +20,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 	onNavigateToInventory,
 }) => {
 	const [realProducts, setRealProducts] = useState<Product[]>([])
+	const [logs, setLogs] = useState<ActivityLog[]>([]) // <-- State baru untuk log asli
 	const [isLoading, setIsLoading] = useState(true)
 
 	useEffect(() => {
-		productService
-			.getAll()
-			.then(setRealProducts)
+		// Ambil data produk dan data log secara paralel (bersamaan)
+		Promise.all([
+			productService.getAll(),
+			productService.getLogs(5), // Ambil 5 log aktivitas terbaru
+		])
+			.then(([productsData, logsData]) => {
+				setRealProducts(productsData)
+				setLogs(logsData)
+			})
 			.catch((err) => console.error('Gagal memuat dashboard:', err.message))
 			.finally(() => setIsLoading(false))
 	}, [])
@@ -61,6 +69,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 			color: 'bg-emerald-500/10 text-emerald-600',
 		},
 	]
+
+	// Helper fungsi format waktu agar lebih mudah dibaca admin
+	const formatTime = (isoString: string) => {
+		const date = new Date(isoString)
+		return (
+			date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
+			' WIB'
+		)
+	}
 
 	return (
 		<div className="space-y-6">
@@ -133,26 +150,54 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 					</div>
 					<button
 						onClick={onNavigateToInventory}
-						className="mt-6 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg flex items-center justify-center space-x-1 transition-colors cursor-pointer">
+						className="mt-6 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg flex items-center justify-center space-x-1 transition-colors">
 						<span>Restock di Inventaris</span>
 						<ArrowRight size={14} />
 					</button>
 				</div>
 
+				{/* LOG AKTIVITAS OTOMATIS (LIVE DARI DATABASE) */}
 				<div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs lg:col-span-2 space-y-6">
 					<div>
 						<div className="flex items-center space-x-2 text-slate-700 mb-4">
 							<Layers size={18} />
-							<h2 className="font-bold text-slate-800">Log Aktivitas Admin</h2>
+							<h2 className="font-bold text-slate-800">
+								Log Aktivitas Live Admin
+							</h2>
 						</div>
 						<div className="relative border-l-2 border-slate-100 pl-4 ml-2 space-y-4">
-							<div className="relative">
-								<div className="absolute -left-5.25 mt-1 w-2.5 h-2.5 bg-slate-400 rounded-full border-2 border-white" />
-								<p className="text-xs font-medium text-slate-400">Baru saja</p>
-								<p className="text-sm text-slate-600 font-medium mt-0.5">
-									Sistem memuat data terkini dari PostgreSQL Supabase
+							{isLoading ? (
+								<p className="text-xs text-slate-400">
+									Memuat log aktivitas...
 								</p>
-							</div>
+							) : logs.length > 0 ? (
+								logs.map((log) => (
+									<div key={log.id} className="relative">
+										{/* Warna indikator bulat kecil menyesuaikan tipe aksi */}
+										<div
+											className={`absolute -left-5.25 mt-1.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+												log.action === 'CREATE'
+													? 'bg-emerald-500'
+													: log.action === 'UPDATE'
+														? 'bg-blue-500'
+														: log.action === 'DELETE'
+															? 'bg-red-500'
+															: 'bg-amber-500'
+											}`}
+										/>
+										<p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+											{formatTime(log.created_at)}
+										</p>
+										<p className="text-sm text-slate-600 font-medium mt-0.5">
+											{log.description}
+										</p>
+									</div>
+								))
+							) : (
+								<p className="text-xs text-slate-400 py-4">
+									Belum ada aktivitas terekam.
+								</p>
+							)}
 						</div>
 					</div>
 					<div className="pt-4 border-t border-slate-100">

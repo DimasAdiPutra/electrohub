@@ -69,6 +69,7 @@ export const SalesView: React.FC = () => {
 			setIsProcessing(true)
 			const bulkPayload = cart.map((item) => ({
 				id: item.product.id,
+				name: item.product.name,
 				currentStock: item.product.stock,
 				quantity: item.quantity,
 			}))

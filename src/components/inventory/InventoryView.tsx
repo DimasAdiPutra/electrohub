@@ -97,28 +97,31 @@ export const InventoryView: React.FC = () => {
 		}
 	}
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	// Sesuaikan parameternya agar menerima data payload hasil upload dari modal
+	const handleSubmit = async (
+		e: React.SubmitEvent<HTMLFormElement>,
+		customPayload?: any,
+	) => {
 		e.preventDefault()
-		if (!formData.name || !formData.sku) return
-		const productImage =
-			formData.image ||
-			'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=150&auto=format&fit=crop&q=60'
+
+		const finalData = customPayload || {
+			...formData,
+			price: Number(formData.price),
+			stock: Number(formData.stock),
+			image:
+				formData.image ||
+				'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=150&auto=format&fit=crop&q=60',
+		}
 
 		try {
 			setIsLoading(true)
-			const payload = {
-				...formData,
-				price: Number(formData.price),
-				stock: Number(formData.stock),
-				image: productImage,
-			}
 
 			if (modalMode === 'add') {
-				await productService.create(payload)
-				alert('Produk ditambahkan!')
+				await productService.create(finalData)
+				alert('Produk baru dengan gambar asli berhasil disimpan!')
 			} else if (editingProductId) {
-				await productService.update(editingProductId, payload)
-				alert('Produk diperbarui!')
+				await productService.update(editingProductId, finalData)
+				alert('Data produk berhasil diperbarui!')
 			}
 			setIsModalOpen(false)
 			loadProducts()
