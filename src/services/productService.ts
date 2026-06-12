@@ -103,29 +103,33 @@ export const productService = {
 		)
 	},
 
-	async updateStockBulk(
-		items: {
-			id: string
-			name: string
-			currentStock: number
-			quantity: number
-		}[],
-	) {
-		for (const item of items) {
-			const newStock = item.currentStock - item.quantity
-			const { error } = await supabase
-				.from('products')
-				.update({ stock: newStock })
-				.eq('id', item.id)
-			if (error) throw error
+	// --- 1. PROSES POTONG STOK & CATAT NOTA TRANSAKSI REAL ---
+  async updateStockBulk(
+    items: { id: string; name: string; currentStock: number; quantity: number; price: number }[],
+    totalPayment: number
+  ) {
+    // A. Kurangi stok masing-masing produk di Supabase
+    for (const item of items) {
+      const newStock = item.currentStock - item.quantity;
+      const { error: stockError } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', item.id);
 
-			// Catat log otomatis untuk setiap transaksi kasir
-			await this.addLog(
-				'TRANSACTION',
-				`Kasir memproses penjualan "${item.name}" sebanyak ${item.quantity} unit`,
-			)
-		}
-	},
+      if (stockError) throw stockError;
+
+      // Catat log aktivitas santai untuk admin
+      await this.addLog('TRANSACTION', `Kasir menjual "${item.name}" sebanyak ${item.quantity} unit`);
+    }
+
+    // B. Masukkan data keuangan riil ke tabel transaksi baru
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const { error: txError } = await supabase
+      .from('sales_transactions')
+      .insert([{ total_payment: totalPayment, total_items: totalItems }]);
+
+    if (txError) throw txError;
+  },
 
 	// --- FUNGSI UNTUK MERUBAH DATA MENJADI EXCEL / CSV ---
 	async downloadInventoryCSV() {
@@ -194,4 +198,24 @@ export const productService = {
 			alert('Gagal mengeksport data: ' + error.message)
 		}
 	},
+
+	// --- FUNGSI BARU: ANALITIK KASIR RIIL ---
+	async getSalesAnalytics() {
+    const { data, error } = await supabase
+      .from('sales_transactions')
+      .select('total_payment');
+
+    if (error) throw error;
+
+    // Hitung total pesanan berdasarkan jumlah baris di tabel transaksi
+    const totalOrders = data.length;
+
+    // Hitung total pendapatan riil dari penjumlahan nominal seluruh transaksi
+    const totalRevenue = data.reduce((sum, tx) => sum + Number(tx.total_payment), 0);
+
+    return {
+      totalOrders,
+      totalRevenue
+    };
+  }
 }

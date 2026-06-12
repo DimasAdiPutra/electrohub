@@ -67,14 +67,18 @@ export const SalesView: React.FC = () => {
 		if (cart.length === 0) return
 		try {
 			setIsProcessing(true)
+
+			// 1. Susun payload data barang yang dibeli (sertakan harga produk)
 			const bulkPayload = cart.map((item) => ({
 				id: item.product.id,
 				name: item.product.name,
 				currentStock: item.product.stock,
 				quantity: item.quantity,
+				price: item.product.price, // <-- Sertakan harga
 			}))
 
-			await productService.updateStockBulk(bulkPayload)
+			// 2. Kirim data barang beserta TOTAL pembayaran keranjang saat ini
+			await productService.updateStockBulk(bulkPayload, totalPayment)
 
 			setCheckoutSuccess(true)
 			setCart([])

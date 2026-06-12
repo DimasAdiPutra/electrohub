@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import type { Product } from '../../types/product'
 import { formatRupiah } from '../../utils/formatCurrency'
-import { productService } from '../../services/productService' // <-- Import ActivityLog
+import { productService } from '../../services/productService'
 import type { ActivityLog } from '../../types/activityLog'
 
 interface DashboardViewProps {
@@ -20,18 +20,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 	onNavigateToInventory,
 }) => {
 	const [realProducts, setRealProducts] = useState<Product[]>([])
-	const [logs, setLogs] = useState<ActivityLog[]>([]) // <-- State baru untuk log asli
+	const [logs, setLogs] = useState<ActivityLog[]>([])
+	const [salesStats, setSalesStats] = useState({
+		totalOrders: 0,
+		totalRevenue: 0,
+	}) // <-- State baru untuk data riil
 	const [isLoading, setIsLoading] = useState(true)
 
 	useEffect(() => {
-		// Ambil data produk dan data log secara paralel (bersamaan)
+		// Ambil 3 data cloud sekaligus secara paralel
 		Promise.all([
 			productService.getAll(),
-			productService.getLogs(5), // Ambil 5 log aktivitas terbaru
+			productService.getLogs(5),
+			productService.getSalesAnalytics(), // <-- Panggil fungsi analitik riil dari database
 		])
-			.then(([productsData, logsData]) => {
+			.then(([productsData, logsData, salesData]) => {
 				setRealProducts(productsData)
 				setLogs(logsData)
+				setSalesStats(salesData) // Masukkan data riil ke state
 			})
 			.catch((err) => console.error('Gagal memuat dashboard:', err.message))
 			.finally(() => setIsLoading(false))
@@ -39,6 +45,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
 	const lowStockItems = realProducts.filter((p) => p.stock <= 5)
 
+	// SEKARANG SEMUA KARTU DI BAWAH INI 100% DINAMIS DARI DATABASE CLOUD
 	const quickStats = [
 		{
 			id: 1,
@@ -57,20 +64,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 		{
 			id: 3,
 			title: 'Pesanan Masuk',
-			value: '24 Order',
+			value: isLoading ? '...' : `${salesStats.totalOrders} Transaksi`,
 			icon: ShoppingCart,
 			color: 'bg-amber-500/10 text-amber-600',
 		},
 		{
 			id: 4,
 			title: 'Total Pendapatan',
-			value: formatRupiah(45200000),
+			value: isLoading ? '...' : formatRupiah(salesStats.totalRevenue),
 			icon: TrendingUp,
 			color: 'bg-emerald-500/10 text-emerald-600',
 		},
 	]
 
-	// Helper fungsi format waktu agar lebih mudah dibaca admin
 	const formatTime = (isoString: string) => {
 		const date = new Date(isoString)
 		return (
@@ -88,13 +94,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 				</p>
 			</div>
 
+			{/* KARTU STATISTIK UTAMA (SUDAH LIVE SEMUANYA) */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 				{quickStats.map((stat) => {
 					const Icon = stat.icon
 					return (
 						<div
 							key={stat.id}
-							className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+							className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between animate-in fade-in duration-300">
 							<div className="space-y-1">
 								<p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
 									{stat.title}
@@ -110,6 +117,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* KOLOM PERINGATAN STOK */}
 				<div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs lg:col-span-1 flex flex-col justify-between">
 					<div>
 						<div className="flex items-center space-x-2 text-red-600 mb-4">
@@ -156,7 +164,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 					</button>
 				</div>
 
-				{/* LOG AKTIVITAS OTOMATIS (LIVE DARI DATABASE) */}
+				{/* LOG AKTIVITAS LIVE */}
 				<div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs lg:col-span-2 space-y-6">
 					<div>
 						<div className="flex items-center space-x-2 text-slate-700 mb-4">
@@ -165,7 +173,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 								Log Aktivitas Live Admin
 							</h2>
 						</div>
-						<div className="relative border-l-2 border-slate-100 pl-4 ml-2 space-y-4">
+						<div className="relative border-l-2 border-slate-100 pl-4 ml-2 space-y-4 max-h-60 overflow-y-auto">
 							{isLoading ? (
 								<p className="text-xs text-slate-400">
 									Memuat log aktivitas...
@@ -173,7 +181,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 							) : logs.length > 0 ? (
 								logs.map((log) => (
 									<div key={log.id} className="relative">
-										{/* Warna indikator bulat kecil menyesuaikan tipe aksi */}
 										<div
 											className={`absolute -left-5.25 mt-1.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
 												log.action === 'CREATE'
@@ -200,12 +207,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 							)}
 						</div>
 					</div>
+
+					{/* VISUALISASI GRAFIK PENJUALAN SEDERHANA */}
 					<div className="pt-4 border-t border-slate-100">
 						<h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-							Tren Penjualan
+							Grafik Performa Toko
 						</h3>
-						<div className="h-28 w-full bg-slate-50 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
-							[ Area Visualisasi Grafik Tren ]
+						<div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-between">
+							<div className="flex items-end space-x-2 h-16 pt-2">
+								{/* Batang grafik simulasi proporsional terhadap total transaksi nyata */}
+								<div className="w-full bg-slate-200 h-1/3 rounded-xs" />
+								<div className="w-full bg-slate-200 h-1/2 rounded-xs" />
+								<div className="w-full bg-slate-200 h-2/3 rounded-xs" />
+								<div
+									className="w-full bg-blue-500 rounded-xs transition-all duration-500"
+									style={{
+										height: `${Math.min(salesStats.totalOrders * 10 + 10, 100)}%`,
+									}}
+								/>
+							</div>
+							<div className="flex justify-between text-[9px] text-slate-400 font-semibold mt-2">
+								<span>Minggu 1</span>
+								<span>Minggu 2</span>
+								<span>Minggu 3</span>
+								<span className="text-blue-600 font-bold">Hari Ini (Live)</span>
+							</div>
 						</div>
 					</div>
 				</div>
